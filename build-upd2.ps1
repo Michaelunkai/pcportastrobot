@@ -1,4 +1,4 @@
-# Self-update regression v2: scenarios A B C D F per build (branch vs upstream main),
+# Self-update regression v2: scenarios A B C D G F per build (branch vs upstream main),
 # one process per scenario. Harness runs AS AstroHybrid.exe from separate app dirs.
 $ErrorActionPreference = 'Continue'
 $pk = 'F:\InstinctTemp\pkgs'
@@ -10,7 +10,7 @@ New-Item -ItemType Directory -Force $ut | Out-Null
 cd F:\InstinctTemp\astro-build
 git fetch origin
 git show origin/build/compile-check:compile-check.ps1 | Set-Content F:\InstinctTemp\cc.ps1 -Encoding ASCII
-Invoke-WebRequest 'https://raw.githubusercontent.com/Michaelunkai/pcportastrobot/c381bf7940d301ae8b6d73ca25cf1902ee898140/update-selfreplace-test2.cs' -OutFile "$ut\update-selfreplace-test2.cs" -UseBasicParsing
+Invoke-WebRequest 'https://raw.githubusercontent.com/Michaelunkai/pcportastrobot/848a556108caddbdd70ce6be5bbca12eaaff986a/update-selfreplace-test2.cs' -OutFile "$ut\update-selfreplace-test2.cs" -UseBasicParsing
 
 function Build-Harness($appDir) {
   New-Item -ItemType Directory -Force $appDir | Out-Null
@@ -29,7 +29,7 @@ function Build-Harness($appDir) {
 
 function Run-Scenarios($appDir, $tag) {
   $total = 0
-  foreach ($s in @('A','B','C','D','F')) {
+  foreach ($s in @('A','B','C','D','G','F')) {
     Write-Output "--- $tag scenario $s ---"
     & "$appDir\AstroHybrid.exe" $s
     $total += $LASTEXITCODE
