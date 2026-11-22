@@ -1,4 +1,4 @@
-# AstroHybrid compile check: Roslyn csc (from dotnet SDK 11) against net48 reference
+# AstroHybrid compile check: Roslyn csc.exe (Microsoft.Net.Compilers.Toolset, runs on .NET Framework 4.8) against net48 reference
 # assemblies fetched from nuget.org. Compiles all C# sources except XAML codebehind
 # (Views\*.xaml.cs and App.xaml.cs), whose .g.cs partials need a full msbuild WPF pass.
 $ErrorActionPreference = 'Continue'
@@ -16,7 +16,8 @@ $pkgs = @(
   @{id='system.runtime.compilerservices.unsafe'; v='6.0.0'},
   @{id='system.threading.tasks.extensions'; v='4.5.4'},
   @{id='microsoft.bcl.asyncinterfaces'; v='8.0.0'},
-  @{id='system.numerics.vectors'; v='4.5.0'}
+  @{id='system.numerics.vectors'; v='4.5.0'},
+  @{id='microsoft.net.compilers.toolset'; v='4.12.0'}
 )
 foreach ($p in $pkgs) {
   $dst = "$pk\$($p.id)"
@@ -54,7 +55,12 @@ foreach ($r in ($refs + $libs)) {
 foreach ($f in $files) { $rsp += "`"$f`"" }
 $rsp | Set-Content F:\InstinctTemp\csc.rsp -Encoding ASCII
 
-& dotnet 'C:\Program Files\dotnet\sdk\11.0.100\Roslyn\bincore\csc.dll' '@F:\InstinctTemp\csc.rsp' 2>&1 | Out-File F:\InstinctTemp\csc.log
-$errs = Select-String -Path F:\InstinctTemp\csc.log -Pattern ': error'
+$csc = "$pk\microsoft.net.compilers.toolset\tools\net472\csc.exe"
+if (Test-Path $csc) {
+  & $csc '@F:\InstinctTemp\csc.rsp' 2>&1 | Out-File F:\InstinctTemp\csc.log
+} else {
+  Write-Output "CSC MISSING $csc"
+}
+$errs = Select-String -Path F:\InstinctTemp\csc.log -Pattern ': error' -ErrorAction SilentlyContinue
 Write-Output "csc exit=$LASTEXITCODE errors=$($errs.Count)"
 $errs | Select-Object -First 25 | ForEach-Object { $_.Line }
