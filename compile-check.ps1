@@ -8,7 +8,7 @@ New-Item -ItemType Directory -Force $pk | Out-Null
 Remove-Item -Force "$root\global.json" -ErrorAction SilentlyContinue
 
 $pkgs = @(
-  @{id='microsoft.netframework.referenceassemblies'; v='1.0.3'},
+  @{id='microsoft.netframework.referenceassemblies.net48'; v='1.0.3'},
   @{id='system.text.json'; v='8.0.5'},
   @{id='system.text.encodings.web'; v='8.0.0'},
   @{id='system.buffers'; v='4.5.1'},
@@ -30,7 +30,7 @@ foreach ($p in $pkgs) {
   } catch { Write-Output "PKG FAIL $($p.id): $($_.Exception.Message)" }
 }
 
-$ref = "$pk\microsoft.netframework.referenceassemblies\build\.NETFramework\v4.8"
+$ref = "$pk\microsoft.netframework.referenceassemblies.net48\build\.NETFramework\v4.8"
 $refs = @('mscorlib','System','System.Core','System.Drawing','System.Management','System.Net.Http','System.Xaml','System.Windows.Forms','System.IO.Compression.FileSystem','System.ComponentModel.DataAnnotations','PresentationCore','PresentationFramework','WindowsBase','System.IO.Compression') | ForEach-Object { "$ref\$_.dll" }
 $libs = @(
   "$pk\system.text.json\lib\net462\System.Text.Json.dll",
