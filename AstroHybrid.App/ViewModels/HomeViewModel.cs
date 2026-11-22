@@ -61,7 +61,9 @@ namespace AstroHybrid.App.ViewModels
         {
             var parts = new System.Collections.Generic.List<string>();
 
-            var sizeLabels = new[] { "1280x720", "1600x900", "1920x1080", "2560x1440" };
+            // Indices 0..3 are 16:9 and 4..5 the 21:9 ultrawide modes, as on the Graphics page;
+            // without the ultrawide entries the summary dropped the resolution for Size 4/5.
+            var sizeLabels = new[] { "1280x720", "1600x900", "1920x1080", "2560x1440", "2560x1080", "3440x1440" };
             if (_mainViewModel.Settings.Size >= 0 && _mainViewModel.Settings.Size < sizeLabels.Length)
                 parts.Add(sizeLabels[_mainViewModel.Settings.Size]);
 
