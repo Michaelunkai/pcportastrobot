@@ -131,7 +131,7 @@ public static class UpdateSelfReplaceTest
                     Check(markerNow.SequenceEqual(new byte[] { 7 }), "E2: marker.dll preserved/restored after failure",
                         "marker=" + (markerNow.SequenceEqual(new byte[] { 7 }) ? "original" : "UPDATE (mixed install)"));
                     var leftover = File.Exists(Path.Combine(appDir, "00first.dll"));
-                    Check(leftover, "D2: newly-copied file survives a failed install (restore does not clean new files - parity limitation)",
+                    Check(!leftover, "D2: rollback removes newly-added file after failed install",
                         leftover ? "00first.dll left behind" : "cleaned");
                     break;
                 }
