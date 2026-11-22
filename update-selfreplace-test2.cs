@@ -104,7 +104,8 @@ public static class UpdateSelfReplaceTest
                         bool ok = svc.InstallUpdateAsync(new UpdateInfo { FileName = "update.zip", Version = "9.9.11" }).GetAwaiter().GetResult();
                         Check(ok, "C1: install succeeds with locked .old", "returned " + ok);
                         Check(File.ReadAllBytes(selfPath).SequenceEqual(newExe), "C2: exe replaced", "exe=" + (File.ReadAllBytes(selfPath).SequenceEqual(newExe) ? "update" : "other"));
-                        var fallback = Directory.GetFiles(appDir, "AstroHybrid.exe.old.*");
+                        var fallback = Directory.GetFiles(appDir, "AstroHybrid.exe.old.*")
+                            .Where(f => !string.Equals(f, selfPath + ".old", StringComparison.OrdinalIgnoreCase)).ToArray();
                         Check(fallback.Length == 1 && File.ReadAllBytes(fallback[0]).SequenceEqual(selfBytes),
                             "C3: unique-name fallback holds original exe", fallback.Length + " fallback file(s)");
                     }
