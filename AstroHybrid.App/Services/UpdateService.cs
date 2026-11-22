@@ -315,7 +315,7 @@ namespace AstroHybrid.App.Services
                 await CopyUpdateFilesAsync(extractDir, rollbackJournal);
 
                 // Best-effort cleanup of the moved-aside originals; files still loaded by this
-                // running process stay locked and are removed on a later run.
+                // running process stay locked and are left on disk - no later-run cleanup exists.
                 foreach (var entry in rollbackJournal)
                 {
                     if (entry.Item2 != null)
@@ -347,7 +347,14 @@ namespace AstroHybrid.App.Services
 
                 // Undo the partial copy precisely (added files removed, moved-aside originals
                 // moved back), then restore from backup as the pre-existing safety net.
-                RollbackCopiedFiles(rollbackJournal);
+                // Rollback failures are surfaced on the error state, never masking the
+                // original install error, and no restoration is implied when incomplete.
+                var rollbackFailures = RollbackCopiedFiles(rollbackJournal);
+                if (rollbackFailures.Count > 0)
+                {
+                    state.ErrorMessage = ex.Message + " (rollback incomplete: " + rollbackFailures.Count + " file(s) could not be restored)";
+                    StateChanged?.Invoke(state);
+                }
                 await RestoreFromBackupAsync();
                 return false;
             }
@@ -429,7 +436,8 @@ namespace AstroHybrid.App.Services
         // fails, and RestoreFromBackupAsync hits the same lock trying to copy the backup back.
         // Returns the path the previous content of destFile was moved to, or null when
         // destFile did not exist (the copied file was newly added).
-        private static string? ReplaceFile(string sourceFile, string destFile)
+        private static string? ReplaceFile(string sourceFile, string destFile,
+            System.Collections.Generic.List<System.Tuple<string, string?>>? rollbackJournal = null)
         {
             string? movedAside = null;
             if (File.Exists(destFile))
@@ -448,6 +456,10 @@ namespace AstroHybrid.App.Services
                     File.Move(destFile, movedAside);
                 }
             }
+            // Journal BEFORE the copy: if the copy itself throws after a successful
+            // rename (AV transient, disk full, ...), the original is still restorable
+            // from its moved-aside path, and a partially written new file removed.
+            rollbackJournal?.Add(System.Tuple.Create(destFile, movedAside));
             File.Copy(sourceFile, destFile, true);
             return movedAside;
         }
@@ -455,8 +467,11 @@ namespace AstroHybrid.App.Services
         // Precise undo for a failed install: delete every file the copy added and move every
         // moved-aside original back, in reverse copy order. The running process's files can be
         // renamed but not deleted; the new copies are not locked, so this restores them.
-        private static void RollbackCopiedFiles(System.Collections.Generic.List<System.Tuple<string, string?>> journal)
+        // Best-effort undo; every file it cannot restore is reported so an incomplete
+        // rollback is visible instead of silently lost. Never masks the original error.
+        private static System.Collections.Generic.List<string> RollbackCopiedFiles(System.Collections.Generic.List<System.Tuple<string, string?>> journal)
         {
+            var failures = new System.Collections.Generic.List<string>();
             for (int i = journal.Count - 1; i >= 0; i--)
             {
                 var dest = journal[i].Item1;
@@ -466,8 +481,12 @@ namespace AstroHybrid.App.Services
                     if (File.Exists(dest)) File.Delete(dest);
                     if (movedAside != null && File.Exists(movedAside)) File.Move(movedAside, dest);
                 }
-                catch { }
+                catch
+                {
+                    failures.Add(dest);
+                }
             }
+            return failures;
         }
 
         private async Task CopyUpdateFilesAsync(string extractDir, System.Collections.Generic.List<System.Tuple<string, string?>>? rollbackJournal = null)
@@ -487,8 +506,7 @@ namespace AstroHybrid.App.Services
                     Directory.CreateDirectory(destDir);
                 }
 
-                var movedAside = ReplaceFile(file, destFile);
-                rollbackJournal?.Add(System.Tuple.Create(destFile, movedAside));
+                ReplaceFile(file, destFile, rollbackJournal);
             }
 
             await Task.CompletedTask;
