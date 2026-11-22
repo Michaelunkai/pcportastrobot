@@ -439,12 +439,12 @@ namespace AstroHybrid.App.ViewModels
 
         private async Task ChangeInstallLocationAsync()
         {
-            var dialog = new System.Windows.Forms.FolderBrowserDialog
+            using (var dialog = new System.Windows.Forms.FolderBrowserDialog
             {
                 Description = "Select new installation location",
                 ShowNewFolderButton = true
-            };
-
+            })
+            {
             if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
                 IsLoading = true;
@@ -464,6 +464,7 @@ namespace AstroHybrid.App.ViewModels
                 {
                     IsLoading = false;
                 }
+            }
             }
         }
 
