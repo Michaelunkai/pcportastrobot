@@ -10,7 +10,7 @@ New-Item -ItemType Directory -Force $st | Out-Null
 cd F:\InstinctTemp\astro-build
 git fetch origin
 git show origin/build/compile-check:compile-check.ps1 | Set-Content F:\InstinctTemp\cc.ps1 -Encoding ASCII
-Invoke-WebRequest 'https://raw.githubusercontent.com/Michaelunkai/pcportastrobot/dc995b6343f225dea07b84b48481eac809fd6587/settings-atomic-test.cs' -OutFile "$st\settings-atomic-test.cs" -UseBasicParsing
+Invoke-WebRequest 'https://raw.githubusercontent.com/Michaelunkai/pcportastrobot/c7a33cfdb84d0fd9366f0fb86ffa63617c68e5da/settings-atomic-test.cs' -OutFile "$st\settings-atomic-test.cs" -UseBasicParsing
 
 $libs = @("$pk\system.text.json\lib\net462\System.Text.Json.dll","$pk\system.text.encodings.web\lib\net462\System.Text.Encodings.Web.dll","$pk\system.buffers\lib\net461\System.Buffers.dll","$pk\system.memory\lib\net461\System.Memory.dll","$pk\system.runtime.compilerservices.unsafe\lib\net461\System.Runtime.CompilerServices.Unsafe.dll","$pk\system.threading.tasks.extensions\lib\net461\System.Threading.Tasks.Extensions.dll","$pk\microsoft.bcl.asyncinterfaces\lib\net462\Microsoft.Bcl.AsyncInterfaces.dll","$pk\system.numerics.vectors\lib\net46\System.Numerics.Vectors.dll")
 
