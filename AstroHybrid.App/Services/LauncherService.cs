@@ -295,11 +295,10 @@ namespace AstroHybrid.App.Services
                 env["ASTROHYBRID_FPS_LIMIT"] = limit == 0 ? "unlimited" : limit.ToString();
             }
 
-            // NVIDIA Reflex
-            if (settings.LowLatency)
-            {
-                env["ASTROHYBRID_LOW_LATENCY"] = "1";
-            }
+            // NVIDIA Reflex: pass the setting both ways. Run-AstroHybrid-DLSS.bat turns low latency
+            // on whenever the variable is unset, so writing only "1" made an off choice come back on
+            // for every DLSS / Frame Generation launch; the bat documents 0 as the off value.
+            env["ASTROHYBRID_LOW_LATENCY"] = settings.LowLatency ? "1" : "0";
 
             // Controller settings
             var padValues = new[] { "auto", "ps", "xbox", "switch", "generic" };
