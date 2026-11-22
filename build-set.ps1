@@ -19,6 +19,7 @@ function Build-Harness($appDir) {
   $rsp = @('/nologo','/nostdlib+','/noconfig','/t:exe','/langversion:latest','/nullable:enable','/nowarn:1701,1702,8632','/utf8output',"/out:$appDir\set-test.exe")
   foreach ($a in @('mscorlib','System','System.Core','System.Drawing','System.Management','System.Net.Http','System.Xaml','System.Windows.Forms','System.IO.Compression.FileSystem','System.ComponentModel.DataAnnotations','PresentationCore','PresentationFramework','WindowsBase','System.IO.Compression')) { $rsp += "/r:$ref\$a.dll" }
   $rsp += '/r:F:\InstinctTemp\astro-check.dll'
+  foreach ($d in @("$pk\system.text.json\lib\net462\System.Text.Json.dll","$pk\system.text.encodings.web\lib\net462\System.Text.Encodings.Web.dll","$pk\system.buffers\lib\net461\System.Buffers.dll","$pk\system.memory\lib\net461\System.Memory.dll","$pk\system.runtime.compilerservices.unsafe\lib\net461\System.Runtime.CompilerServices.Unsafe.dll","$pk\system.threading.tasks.extensions\lib\net461\System.Threading.Tasks.Extensions.dll","$pk\microsoft.bcl.asyncinterfaces\lib\net462\Microsoft.Bcl.AsyncInterfaces.dll","$pk\system.numerics.vectors\lib\net46\System.Numerics.Vectors.dll")) { $rsp += "/r:$d" }
   $rsp += "$st\settings-atomic-test.cs"
   $rsp | Set-Content "$st\set.rsp" -Encoding ASCII
   & $csc "@$st\set.rsp" 2>&1 | Out-File "$appDir\build.log"
