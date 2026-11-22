@@ -55,7 +55,7 @@ foreach ($r in ($refs + $libs)) {
 foreach ($f in $files) { $rsp += "`"$f`"" }
 $rsp | Set-Content F:\InstinctTemp\csc.rsp -Encoding ASCII
 
-$csc = "$pk\microsoft.net.compilers.toolset\tools\net472\csc.exe"
+$csc = "$pk\microsoft.net.compilers.toolset\tasks\net472\csc.exe"
 if (Test-Path $csc) {
   & $csc '@F:\InstinctTemp\csc.rsp' 2>&1 | Out-File F:\InstinctTemp\csc.log
 } else {
