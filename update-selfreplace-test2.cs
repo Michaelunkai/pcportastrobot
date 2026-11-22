@@ -1,7 +1,7 @@
 // Harness v2: self-update file-replacement regression, one scenario per process.
 // Compiled AS AstroHybrid.exe and run from an app dir, so InstallUpdateAsync replaces
 // the RUNNING executable - the exact self-update condition. Usage: AstroHybrid.exe <scenario>
-// Scenarios: A happy | B existing-old | C locked-old | D copy-failure+restore | F nested-parity
+// Scenarios: A happy | B existing-old | C locked-old | D copy-failure+restore | F nested-parity | G nested locked file (rename denied) failure+rollback
 using System;
 using System.IO;
 using System.IO.Compression;
@@ -133,6 +133,33 @@ public static class UpdateSelfReplaceTest
                     var leftover = File.Exists(Path.Combine(appDir, "00first.dll"));
                     Check(!leftover, "D2: rollback removes newly-added file after failed install",
                         leftover ? "00first.dll left behind" : "cleaned");
+                    break;
+                }
+                case "G": // nested file locked by another handle (rename denied) -> install fails; nested originals must survive / be rolled back
+                {
+                    var svc = MakeService(out tempDir);
+                    Directory.CreateDirectory(Path.Combine(appDir, "Build"));
+                    File.WriteAllBytes(Path.Combine(appDir, "Build", "00nested.dll"), new byte[] { 11 });
+                    File.WriteAllBytes(Path.Combine(appDir, "Build", "zzlocked.dll"), new byte[] { 22 });
+                    WriteZip(Path.Combine(tempDir, "update.zip"),
+                        Tuple.Create("AstroHybrid.exe", newExe),
+                        Tuple.Create("Build/00nested.dll", new byte[] { 13 }),
+                        Tuple.Create("Build/zzlocked.dll", new byte[] { 23 }));
+                    using (var lockStream = new FileStream(Path.Combine(appDir, "Build", "zzlocked.dll"), FileMode.Open, FileAccess.Read, FileShare.Read))
+                    {
+                        bool ok = svc.InstallUpdateAsync(new UpdateInfo { FileName = "update.zip", Version = "9.9.14" }).GetAwaiter().GetResult();
+                        Check(!ok, "G1: install fails on locked nested file", "returned " + ok);
+                    }
+                    var zz = File.ReadAllBytes(Path.Combine(appDir, "Build", "zzlocked.dll"));
+                    Check(zz.SequenceEqual(new byte[] { 22 }), "G2: locked nested original intact in place",
+                        zz.SequenceEqual(new byte[] { 22 }) ? "original" : "CHANGED");
+                    var nn = File.ReadAllBytes(Path.Combine(appDir, "Build", "00nested.dll"));
+                    Check(nn.SequenceEqual(new byte[] { 11 }), "G3: earlier-processed nested file rolled back to original",
+                        nn.SequenceEqual(new byte[] { 11 }) ? "original" : nn.SequenceEqual(new byte[] { 13 }) ? "UPDATE (mixed install)" : "other");
+                    Check(!File.Exists(Path.Combine(appDir, "Build", "zzlocked.dll.old")) && Directory.GetFiles(Path.Combine(appDir, "Build"), "zzlocked.dll.old.*").Length == 0,
+                        "G4: no stranded .old for the locked nested file", "checked");
+                    Check(File.ReadAllBytes(selfPath).SequenceEqual(selfBytes), "G5: running exe restored to original bytes",
+                        File.ReadAllBytes(selfPath).SequenceEqual(selfBytes) ? "original" : "other");
                     break;
                 }
                 case "F": // nested package layout: files land in subdir (pre-existing limitation, parity check)
