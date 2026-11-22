@@ -379,15 +379,15 @@ namespace AstroHybrid.App.Services
                 {
                     foreach (var file in Directory.GetFiles(latestBackup, "*.exe"))
                     {
-                        File.Copy(file, Path.Combine(appDir, Path.GetFileName(file)), true);
+                        ReplaceFile(file, Path.Combine(appDir, Path.GetFileName(file)));
                     }
                     foreach (var file in Directory.GetFiles(latestBackup, "*.dll"))
                     {
-                        File.Copy(file, Path.Combine(appDir, Path.GetFileName(file)), true);
+                        ReplaceFile(file, Path.Combine(appDir, Path.GetFileName(file)));
                     }
                     foreach (var file in Directory.GetFiles(latestBackup, "*.config"))
                     {
-                        File.Copy(file, Path.Combine(appDir, Path.GetFileName(file)), true);
+                        ReplaceFile(file, Path.Combine(appDir, Path.GetFileName(file)));
                     }
                 }
             }
@@ -409,6 +409,30 @@ namespace AstroHybrid.App.Services
             return null;
         }
 
+        // Windows locks the files of the running process for overwrite and delete, but a
+        // rename within the same volume still succeeds. Move an existing destination aside
+        // before copying so self-updates can replace the running launcher exe and its loaded
+        // DLLs; without this, File.Copy throws IOException on the locked file, InstallUpdateAsync
+        // fails, and RestoreFromBackupAsync hits the same lock trying to copy the backup back.
+        private static void ReplaceFile(string sourceFile, string destFile)
+        {
+            if (File.Exists(destFile))
+            {
+                var oldFile = destFile + ".old";
+                try { if (File.Exists(oldFile)) File.Delete(oldFile); } catch { }
+                try
+                {
+                    File.Move(destFile, oldFile);
+                }
+                catch
+                {
+                    // A stale locked .old blocked the rename; fall back to a unique name.
+                    File.Move(destFile, destFile + ".old." + DateTime.Now.Ticks.ToString("x"));
+                }
+            }
+            File.Copy(sourceFile, destFile, true);
+        }
+
         private async Task CopyUpdateFilesAsync(string extractDir)
         {
             var appDir = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
@@ -426,7 +450,7 @@ namespace AstroHybrid.App.Services
                     Directory.CreateDirectory(destDir);
                 }
 
-                File.Copy(file, destFile, true);
+                ReplaceFile(file, destFile);
             }
 
             await Task.CompletedTask;
