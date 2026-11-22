@@ -10,7 +10,7 @@ New-Item -ItemType Directory -Force $ut | Out-Null
 cd F:\InstinctTemp\astro-build
 git fetch origin
 git show origin/build/compile-check:compile-check.ps1 | Set-Content F:\InstinctTemp\cc.ps1 -Encoding ASCII
-Invoke-WebRequest 'https://raw.githubusercontent.com/Michaelunkai/pcportastrobot/fad794f585da316e5293590afeff22aa1f8f070d/update-selfreplace-test2.cs' -OutFile "$ut\update-selfreplace-test2.cs" -UseBasicParsing
+Invoke-WebRequest 'https://raw.githubusercontent.com/Michaelunkai/pcportastrobot/c381bf7940d301ae8b6d73ca25cf1902ee898140/update-selfreplace-test2.cs' -OutFile "$ut\update-selfreplace-test2.cs" -UseBasicParsing
 
 function Build-Harness($appDir) {
   New-Item -ItemType Directory -Force $appDir | Out-Null
