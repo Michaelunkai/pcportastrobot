@@ -54,7 +54,11 @@ namespace AstroHybrid.App.Services
 
             if (state.IsInstalled)
             {
-                state.InstallSizeBytes = GetDirectorySize(state.InstallPath);
+                // The walk below enumerates every file in the install (the game exes and the
+                // hard-linked module copies) and can take seconds on a slow disk; keep it off the
+                // caller's thread. GetInstallationStateAsync's other awaits complete synchronously,
+                // so without this the whole method blocks the UI during startup.
+                state.InstallSizeBytes = await Task.Run(() => GetDirectorySize(state.InstallPath));
                 if (state.Manifest == null)
                 {
                     var exePath = Path.Combine(installPath, "AstroBot.exe");
