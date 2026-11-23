@@ -67,6 +67,15 @@ namespace AstroHybrid.App.Services
             return new AppSettings();
         }
 
+        // Contract: pass the FULL settings object this instance loaded (Load()) with the
+        // caller's changes applied. A partially populated object marks every untouched
+        // property "unchanged" only against its own baseline; a caller that never loaded
+        // gets the current disk state as baseline, so any property at its default in the
+        // partial object overwrites the disk value - i.e. a partial Save resets fields the
+        // caller never meant to touch. Coupled fields must be set together: changing only
+        // the rumble index while the explicit percent came from another writer leaves the
+        // pair mismatched, and the read-only computed EffectiveRumblePercent (JsonIgnore)
+        // is not part of the merge, so an index-only change can be ignored at runtime.
         public void Save(AppSettings settings)
         {
             lock (_fileLock)
